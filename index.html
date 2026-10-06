@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Street 3on3 Prototype</title>
+  <style>
+    html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;background:#111}
+    body{font-family:Arial,sans-serif}
+    #hud{position:fixed;left:14px;top:14px;z-index:10;color:#fff;background:#000b;
+      padding:11px 13px;border-radius:12px;font-size:14px;line-height:1.45;backdrop-filter:blur(6px)}
+    #score{font-size:26px;font-weight:800;margin-bottom:4px}
+    #status{color:#ddd}
+    #help{opacity:.85;margin-top:6px}
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="hud">
+    <div id="score">0 PTS</div>
+    <div id="status">로딩 중...</div>
+    <div id="help">WASD 이동 · Shift 달리기 · Space 점프 · F 슛</div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
