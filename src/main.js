@@ -147,9 +147,12 @@ async function init(){
     ENDLINE_WALL.depth
   );
   const wallMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff2020,
     transparent: true,
-    opacity: 0,
+    opacity: 0.38,
     depthWrite: false,
+    depthTest: false,
+    side: THREE.DoubleSide,
   });
 
   endlineWall = new THREE.Mesh(wallGeometry, wallMaterial);
@@ -190,7 +193,7 @@ async function init(){
   camera.position.copy(CAMERA.farPosition);
   camera.lookAt(CAMERA.farLookAt);
 
-  status('플레이 중');
+  setEndlineWallZ(ENDLINE_WALL.z);
 }
 
 function moveVector(){
@@ -201,6 +204,20 @@ function moveVector(){
   );
   if(v.lengthSq()>1) v.normalize();
   return v;
+}
+
+function setEndlineWallZ(z){
+  ENDLINE_WALL.z = z;
+
+  if(endlineWall){
+    endlineWall.position.z = z;
+    endlineWall.updateMatrixWorld(true);
+    endlineWallBox.setFromObject(endlineWall);
+  }
+
+  status(
+    `디버그 벽 Z ${z.toFixed(2)}  |  [ / ] 이동  |  Shift+[ / ] 미세조정`
+  );
 }
 
 function collideWithEndlineWall(){
@@ -301,7 +318,7 @@ function updateBall(dt, elapsed){
       scoreEl.textContent = `${score} PTS`;
       status('SWISH!');
       ballMode='held';
-      setTimeout(()=>status('플레이 중'),600);
+      setTimeout(()=>setEndlineWallZ(ENDLINE_WALL.z),600);
       play(actions.Dribble ? 'Dribble' : 'Idle');
     }
   }
@@ -360,6 +377,19 @@ function updateCamera(dt){
 
 addEventListener('keydown',e=>{
   keys[e.code]=true;
+
+  if(e.code==='BracketLeft' && !e.repeat){
+    e.preventDefault();
+    const step = e.shiftKey ? 0.02 : 0.10;
+    setEndlineWallZ(ENDLINE_WALL.z - step);
+  }
+
+  if(e.code==='BracketRight' && !e.repeat){
+    e.preventDefault();
+    const step = e.shiftKey ? 0.02 : 0.10;
+    setEndlineWallZ(ENDLINE_WALL.z + step);
+  }
+
   if(e.code==='Space' && !e.repeat){ e.preventDefault(); jump(); }
   if(e.code==='KeyF' && !e.repeat) shoot();
 });
