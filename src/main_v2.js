@@ -105,7 +105,7 @@ async function init(){
   scene.add(court);
 
   status('캐릭터 로딩...');
-  const p = await loader.loadAsync('/assets/player.glb');
+  const p = await loader.loadAsync('/assets/player_v2.glb');
   player = p.scene;
   normalizeHeight(player, 1.92);
   player.position.set(0, FLOOR_Y, 1.5);
