@@ -69,12 +69,15 @@ const PLAY = {
 // 플레이어를 따라가지 않고 코트 전체를 보여주며,
 // 공이 좌우로 움직일 때만 카메라와 시선이 살짝 따라간다.
 const CAMERA = {
-  basePosition: new THREE.Vector3(0, 6.4, 9.2),
-  baseLookAt: new THREE.Vector3(0, 1.45, -4.1),
-  positionXFollow: 0.30,
-  lookXFollow: 0.16,
-  maxXShift: 2.35,
-  smoothSpeed: 4.8,
+  // 이전 정상 화면의 카메라 위치를 기준으로 고정.
+  basePosition: new THREE.Vector3(0, 3.65, 6.9),
+  baseLookAt: new THREE.Vector3(0, 1.05, -0.75),
+
+  // 공이 좌우로 치우칠 때만 아주 조금 이동.
+  positionXFollow: 0.22,
+  lookXFollow: 0.11,
+  maxXShift: 1.65,
+  smoothSpeed: 5.2,
 };
 
 function status(s){ statusEl.textContent = s; }
@@ -143,6 +146,10 @@ async function init(){
     if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
   });
   scene.add(ball);
+
+  // 로딩 직후에도 캐릭터/공이 화면에 확실히 잡히도록 초기 카메라를 설정.
+  camera.position.copy(CAMERA.basePosition);
+  camera.lookAt(CAMERA.baseLookAt);
 
   status('플레이 중');
 }
@@ -248,8 +255,8 @@ function updateBall(dt, elapsed){
 }
 
 function updateCamera(dt){
-  // 카메라 기준은 플레이어가 아니라 공.
-  // 3대3에서 패스가 오가더라도 화면 구도가 크게 흔들리지 않게 한다.
+  // 3on3 스타일 고정 구도.
+  // 플레이어가 아니라 공의 X 위치만 참고해서 좌우로 살짝 팬한다.
   const trackedX = ball ? ball.position.x : 0;
 
   const cameraShiftX = THREE.MathUtils.clamp(
