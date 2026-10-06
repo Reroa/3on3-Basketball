@@ -60,19 +60,24 @@ const HOOP = new THREE.Vector3(
 // 골대 아래/베이스라인까지 접근 가능하게 수정
 const COURT_NATIVE_ENDLINE_Z = -9.53;
 const COURT_ENDLINE_Z = COURT_NATIVE_ENDLINE_Z * COURT_SCALE;
-const ENDLINE_INSIDE_MARGIN = 0.05;
+
+const ENDLINE_WALL = {
+  z: COURT_ENDLINE_Z,
+  width: 22.0,
+  height: 4.0,
+  depth: 0.18,
+  playerRadius: 0.34,
+};
 
 const PLAY = {
   minX: -8.2,
   maxX: 8.2,
-
-  // 1차 안전 제한. 실제 최종 제한은 아래 enforceEndlineBoundary()에서
-  // 캐릭터의 보이는 3D 바운딩박스를 기준으로 처리한다.
-  minZ: COURT_ENDLINE_Z,
+  minZ: COURT_ENDLINE_Z - 1.0,
   maxZ: 3.2,
 };
 
-const playerWorldBounds = new THREE.Box3();
+let endlineWall = null;
+const endlineWallBox = new THREE.Box3();
 
 // 3on3 스타일 고정 카메라.
 // 플레이어를 따라가지 않고 코트 전체를 보여주며,
@@ -135,6 +140,24 @@ async function init(){
   });
   scene.add(court);
 
+  // 골대 쪽 흰색 엔드라인 위치에 실제 투명 벽 생성.
+  const wallGeometry = new THREE.BoxGeometry(
+    ENDLINE_WALL.width,
+    ENDLINE_WALL.height,
+    ENDLINE_WALL.depth
+  );
+  const wallMaterial = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+  });
+
+  endlineWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  endlineWall.position.set(0, ENDLINE_WALL.height * 0.5, ENDLINE_WALL.z);
+  scene.add(endlineWall);
+  endlineWall.updateMatrixWorld(true);
+  endlineWallBox.setFromObject(endlineWall);
+
   status('캐릭터 로딩...');
   const p = await loader.loadAsync('/assets/player.glb');
   player = p.scene;
@@ -180,19 +203,14 @@ function moveVector(){
   return v;
 }
 
-function enforceEndlineBoundary(){
-  if(!player) return;
+function collideWithEndlineWall(){
+  if(!player || !endlineWall) return;
 
-  // 루트 좌표가 아니라 현재 애니메이션/회전이 반영된
-  // 실제 캐릭터 메시의 가장 뒤쪽 점을 기준으로 엔드라인 충돌 처리.
-  player.updateMatrixWorld(true);
-  playerWorldBounds.setFromObject(player);
+  const insideFaceZ = endlineWallBox.max.z;
+  const stopZ = insideFaceZ + ENDLINE_WALL.playerRadius;
 
-  const allowedMinZ = COURT_ENDLINE_Z + ENDLINE_INSIDE_MARGIN;
-
-  if(playerWorldBounds.min.z < allowedMinZ){
-    player.position.z += allowedMinZ - playerWorldBounds.min.z;
-    player.updateMatrixWorld(true);
+  if(player.position.z < stopZ){
+    player.position.z = stopZ;
   }
 }
 
@@ -226,8 +244,8 @@ function updatePlayer(dt){
   player.position.x = THREE.MathUtils.clamp(player.position.x, PLAY.minX, PLAY.maxX);
   player.position.z = THREE.MathUtils.clamp(player.position.z, PLAY.minZ, PLAY.maxZ);
 
-  // GLB 흰색 엔드라인을 캐릭터의 실제 몸이 넘지 못하게 한다.
-  enforceEndlineBoundary();
+  // 흰색 엔드라인에 세운 투명 벽과 충돌.
+  collideWithEndlineWall();
 }
 
 function jump(){
